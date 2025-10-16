@@ -1,0 +1,3 @@
+HOST='localhost'
+WEB_PORT=8765
+HTTP_PORT=8766
