@@ -1,9 +1,11 @@
 import asyncio
 import json
+import logging
 from aiohttp import web
 
 class HttpServer:
-    def __init__(self, host = 'localhost', http_port=8766):
+    def __init__(self, logger : logging.Logger, host = 'localhost', http_port=8766):
+        self.logger = logger
         self.host = host
         self.http_port = http_port
         self.http_app = web.Application()
@@ -18,7 +20,7 @@ class HttpServer:
         await self.runner.setup()
         self.site = web.TCPSite(self.runner, self.host, self.http_port)
         await self.site.start()
-        print(f"HTTP server started at {self.host}:{self.http_port}")
+        self.logger.info(f"HTTP server started at {self.host}:{self.http_port}")
     
     async def terminate(self):
         self.runner.shutdown()

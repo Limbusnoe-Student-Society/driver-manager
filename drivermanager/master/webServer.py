@@ -1,9 +1,11 @@
 import asyncio
 import websockets
 import json
+import logging
 
 class WebServer:
-    def __init__(self, host = 'localhost', port=8765):
+    def __init__(self, logger : logging.Logger, host = 'localhost', port=8765):
+        self.logger = logger
         self.host = host
         self.port = port
         self.connected_clients = set()
@@ -25,15 +27,15 @@ class WebServer:
     async def handle(self, websocket):
         self.connected_clients.add(websocket)
         client_id = id(websocket)
-        print(f"Client {client_id} connected")
+        self.logger.info(f"Client {client_id} connected")
         try:
             async for message in websocket:
                 json_msg = json.loads(message)
                 await self.handle_handshake(client_id, json_msg)
         except websockets.exceptions.ConnectionClosed:
-            print(f"Client {client_id} disconnected")
+            self.logger.info(f"Client {client_id} disconnected")
         except json.decoder.JSONDecodeError:
-            print(f"Client {client_id} sent non-JSON message. Ignored")
+            self.logger.info(f"Client {client_id} sent non-JSON message. Ignored")
         finally:
             self.connected_clients.remove(websocket)
             self.client_os.pop(client_id, None)
@@ -41,11 +43,11 @@ class WebServer:
         if 'os' in json:
             os = json['os']
             self.client_os[client_id] = os
-            print(f"Client {client_id} sent OS: {os}")
+            self.logger.info(f"Client {client_id} sent OS: {os}")
     # Запуск веб сервера
     async def start(self):
         self.server = await websockets.serve(self.handle, self.host, self.port)
-        print(f"Web server started at {self.host}:{self.port}")
+        self.logger.info(f"Web server started at {self.host}:{self.port}")
         await self.server.serve_forever()
 
     async def terminate(self):

@@ -4,6 +4,7 @@ import win32event
 from serverAgent import ServerAgent 
 from serverConfig import *
 
+#TODO: отложено
 class PythonService(win32serviceutil.ServiceFramework):
     _svc_name_ = 'drvmanagermaster'
     _svc_display_name_ = 'Driver Manager Master'

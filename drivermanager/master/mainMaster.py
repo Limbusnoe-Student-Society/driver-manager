@@ -1,7 +1,11 @@
 from serverAgent import ServerAgent
-from serverConfig import *
+import logging
+import serverConfig as cfg
 import asyncio
  
 if __name__ == "__main__":           
-    agent = ServerAgent(HOST, WEB_PORT, HTTP_PORT)
-    asyncio.run(agent.start())
+    agent = ServerAgent(cfg.HOST, cfg.WEB_PORT, cfg.HTTP_PORT)
+    try:
+        asyncio.run(agent.start())
+    except KeyboardInterrupt:
+        agent.logger.info("Client stopped by user")
