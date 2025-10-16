@@ -8,13 +8,13 @@ from typing import List, Optional
 import websockets
 from driverInstaller import install_drivers, install_driver, InstallResult
 
-logger = logging.getLogger("clientAgent")
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s - %(message)s")
-
 INSECURE_TLS = True
-RECONNECT_DELAY_INITIAL = float(os.environ.get("RECONNECT_DELAY", "5"))
+RECONNECT_DELAY_INITIAL = 5.0
 
 class ClientAgent:
+    logger = logging.getLogger("clientAgent")
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s - %(message)s")
+
     def __init__(self, host: str = 'localhost', port: int = 8765):
         self.host = host
         self.port = port
@@ -40,15 +40,15 @@ class ClientAgent:
 
     async def connect(self) -> bool:
         try:
-            logger.info("Connecting to master at %s", self.uri)
+            self.logger.info("Connecting to master at %s", self.uri)
             self.websocket = await websockets.connect(self.uri, ssl=self.ssl_context)
             self.running = True
             # сразу отправляем информацию о клиенте
             await self.send({"os": self.currentOS})
-            logger.info("Connected to %s", self.uri)
+            self.logger.info("Connected to %s", self.uri)
             return True
         except Exception as e:
-            logger.warning("Error connecting to websocket: %s", e)
+            self.logger.warning("Error connecting to websocket: %s", e)
             self.websocket = None
             self.running = False
             return False
@@ -68,25 +68,25 @@ class ClientAgent:
 
             # Проверяем наличие атрибута
             if not driver_path or not isinstance(driver_path, str):
-                logger.warning("Invalid or missing 'file' attribute in payload")
+                self.logger.warning("Invalid or missing 'file' attribute in payload")
                 return
-            logger.info(f"Starting installation of driver: {driver_path}")
+            self.logger.info(f"Starting installation of driver: {driver_path}")
             
             # Выполняем установку драйвера
             install_driver(driver_path)
         except Exception as e:
-            logger.exception("Error handling driver installation")
+            self.logger.exception("Error handling driver installation")
 
 
     async def send(self, data: dict) -> bool:
         if self.websocket is None:
-            logger.warning("WebSocket is not connected, cannot send")
+            self.logger.warning("WebSocket is not connected, cannot send")
             return False
         try:
             await self.websocket.send(json.dumps(data))
             return True
         except Exception as e:
-            logger.exception("Error sending data: %s", e)
+            self.logger.exception("Error sending data: %s", e)
             return False
 
     async def receive_loop(self):
@@ -95,15 +95,15 @@ class ClientAgent:
                 try:
                     data = json.loads(message)
                 except json.JSONDecodeError:
-                    logger.warning("Received non-json message: %s", message)
+                    self.logger.warning("Received non-json message: %s", message)
                     continue
-                logger.info("Received message: %s", data)
+                self.logger.info("Received message: %s", data)
                 await self.handle_message(data)
         except websockets.exceptions.ConnectionClosed as e:
-            logger.info("Connection closed: %s", e)
+            self.logger.info("Connection closed: %s", e)
             self.running = False
         except Exception as e:
-            logger.exception("Receive loop error")
+            self.logger.exception("Receive loop error")
             self.running = False
 
     async def run(self):
@@ -115,7 +115,7 @@ class ClientAgent:
                 self.reconnectDelay = RECONNECT_DELAY_INITIAL
                 await self.receive_loop()
             else:
-                logger.info("Connect failed, will retry in %.1f seconds", self.reconnectDelay)
+                self.logger.info("Connect failed, will retry in %.1f seconds", self.reconnectDelay)
 
             # ожидание перед следующей попыткой
             await asyncio.sleep(self.reconnectDelay)

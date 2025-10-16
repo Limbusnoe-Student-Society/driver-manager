@@ -18,25 +18,13 @@ import platform
 import subprocess
 import logging
 from pathlib import Path
-from typing import List, Dict, Optional, Tuple
-import argparse
+from typing import List, Dict, Optional
 import shutil
 import common.fileManager as fm
 
 LOGGER_NAME = "driver_installer"
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s - %(message)s")
 logger = logging.getLogger(LOGGER_NAME)
-
-extensionToOperatingSystem = {
-    ".exe": {"windows"},
-    ".msi": {"windows"},
-    ".inf": {"windows"},
-    ".run": {"linux"},
-    ".tar": {"linux"},
-    ".gz": {"linux"},
-    ".deb": {"linux"},
-    ".rpm": {"linux"}
-}
 
 DEFAULT_INSTALL_TIMEOUT = 300
 
@@ -95,7 +83,7 @@ def _windows_install(file_path: str, ext: str, installer_args: Optional[List[str
         cmd = [str(p)] + args
         return _run_cmd(cmd)
     else:
-        return InstallResult(False, reason=f"Unsupported windows extension: {full_ext}")
+        return InstallResult(False, reason=f"Unsupported windows extension: {ext}")
 
 
 def _linux_install(file_path: str, ext: str, installer_args: Optional[List[str]] = None) -> InstallResult:
@@ -120,7 +108,7 @@ def _linux_install(file_path: str, ext: str, installer_args: Optional[List[str]]
             logger.warning("Failed to chmod +x %s", p)
         cmd = ["sudo", "bash", str(p)] + installer_args
         return _run_cmd(cmd)
-    elif ext == "tar" or ext == "gz":
+    elif ext == ".tar" or ext == ".gz":
         # Extract to temp dir and try to find installer scripts
         tmpdir = Path("/tmp/driver_install_" + p.stem)
         if tmpdir.exists():
@@ -142,7 +130,7 @@ def _linux_install(file_path: str, ext: str, installer_args: Optional[List[str]]
                 return _run_cmd(["sudo", "bash", str(found)] + installer_args)
         return InstallResult(True, reason="extracted_only", stdout=f"Extracted to {tmpdir}")
     else:
-        return InstallResult(False, reason=f"Unsupported linux extension: {full_ext}")
+        return InstallResult(False, reason=f"Unsupported linux extension: {ext}")
 
 
 def install_driver(file_path: str, installer_args: Optional[List[str]] = None) -> InstallResult:
@@ -187,35 +175,3 @@ def install_drivers(files: List[str], common_installer_args: Optional[List[str]]
             logger.exception("Unhandled exception while installing %s", f)
             results[f] = {"success": False, "reason": "exception", "stderr": str(e)}
     return results
-
-
-# ---------- CLI (для тестирования) ----------
-def _parse_args():
-    p = argparse.ArgumentParser(description="Driver batch installer (Windows/Linux)")
-    p.add_argument("files", nargs="+", help="Paths to driver files to install")
-    p.add_argument("--args", nargs="*", help="Common installer args to append", default=[])
-    p.add_argument("--verbose", action="store_true")
-    return p.parse_args()
-
-
-def main():
-    args = _parse_args()
-    if args.verbose:
-        logger.setLevel(logging.DEBUG)
-
-    results = install_drivers(args.files, args.args)
-    for fname, info in results.items():
-        print(f"=== {fname} ===")
-        print(f"Success: {info.get('success')}")
-        if info.get("reason"):
-            print(f"Reason: {info.get('reason')}")
-        if info.get("stdout"):
-            print("--- stdout ---")
-            print(info.get("stdout"))
-        if info.get("stderr"):
-            print("--- stderr ---")
-            print(info.get("stderr"))
-        print()
-
-if __name__ == "__main__":
-    main()
