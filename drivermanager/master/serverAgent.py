@@ -2,6 +2,7 @@ import asyncio
 from webServer import *
 from httpServer import *
 from serverConfig import *
+import common.fileManager as fm
 import logging
 
 class ServerAgent:
@@ -29,6 +30,6 @@ class ServerAgent:
         files = data['files']
         response = ""
         for file in files:
-            i = await self.web.broadcast(json.dumps({'file': file}), target_os(file))
+            i = await self.web.broadcast(json.dumps({'file': file}), fm.target_os(file))
             response += f"File \"{file}\" sent to {i} clients\n"
         return web.Response(text=response, status=200)

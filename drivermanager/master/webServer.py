@@ -39,7 +39,8 @@ class WebServer:
         finally:
             self.connected_clients.remove(websocket)
             self.client_os.pop(client_id, None)
-
+    
+    # Обработка хэндшейка от клиента
     async def handle_handshake(self, client_id, json):
         if 'os' in json:
             os = json['os']
