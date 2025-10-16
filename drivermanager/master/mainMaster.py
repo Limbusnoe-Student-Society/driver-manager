@@ -8,4 +8,4 @@ if __name__ == "__main__":
     try:
         asyncio.run(agent.start())
     except KeyboardInterrupt:
-        agent.logger.info("Client stopped by user")
+        agent.logger.info("Server stopped by user")

@@ -39,11 +39,13 @@ class WebServer:
         finally:
             self.connected_clients.remove(websocket)
             self.client_os.pop(client_id, None)
+
     async def handle_handshake(self, client_id, json):
         if 'os' in json:
             os = json['os']
             self.client_os[client_id] = os
             self.logger.info(f"Client {client_id} sent OS: {os}")
+
     # Запуск веб сервера
     async def start(self):
         self.server = await websockets.serve(self.handle, self.host, self.port)
