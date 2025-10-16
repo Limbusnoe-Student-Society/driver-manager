@@ -14,7 +14,7 @@ extensionToOperatingSystem = {
 empty_set = {}
 
 def get_extension(file_path):
-    return os.path.splitext(file_path)
+    return os.path.splitext(file_path)[1]
 
 def target_os(file_path):
     ext = get_extension(file_path)

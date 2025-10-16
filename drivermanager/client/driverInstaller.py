@@ -20,7 +20,7 @@ import logging
 from pathlib import Path
 from typing import List, Dict, Optional
 import shutil
-import common.fileManager as fm
+import fileManager as fm
 
 LOGGER_NAME = "driver_installer"
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s - %(message)s")
